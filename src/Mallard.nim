@@ -106,6 +106,13 @@ var selectedInstancePath: string
 var selectedInstanceSettingsPath: string
 
 proc handleButtons() =
+    # Handle for if no Discord instances are found
+    if discordChannel.value == "":
+        installButton.enabled = false
+        uninstallButton.enabled = false
+    else:
+        installButton.enabled = true
+        uninstallButton.enabled = true
     selectedInstancePath = getChannelPath(discordChannel.value)
     selectedInstanceSettingsPath = os.joinPath(selectedInstancePath, "settings.json")
     
