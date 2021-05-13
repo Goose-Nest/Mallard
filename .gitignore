@@ -1,0 +1,6 @@
+### Nim ###
+nimcache/
+nimblecache/
+htmldocs/
+
+bin
