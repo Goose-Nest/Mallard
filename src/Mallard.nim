@@ -10,8 +10,8 @@ app.init()
 var window = newWindow("Mallard")
 
 window.onResize = proc(event: ResizeEvent) = 
-    window.height = 176.scaleToDpi
-    window.width = 423.scaleToDpi
+    window.height = 207.scaleToDpi
+    window.width = 388.scaleToDpi
     
 var mainContainer = newLayoutContainer(Layout_Vertical)
 mainContainer.padding = 12
@@ -52,9 +52,9 @@ case hostOS:
     of "windows":
         baseDirectory = os.getEnv("appdata")
     of "macosx":
-        baseDirectory = "~/Library/Application Support"
+        baseDirectory = joinPath(os.getHomeDir(), "~/Library/Application Support")
     of "linux":
-        baseDirectory = "~/.config"
+        baseDirectory = joinPath(os.getHomeDir(), ".config")
     else:
         window.alert(fmt"{hostOS} is not a supported platform.", "Unsupported platform")
         app.quit()
@@ -94,10 +94,15 @@ mainContainer.add(installGm)
 
 # This button handles installation of GooseUpdate in clients that have not yet been injected into
 var installButton = newButton("Install")
+# Disable the button so that handleButtons can handle it
+installButton.enabled = false
 installButton.widthMode = WidthMode_Fill
 
 # This button handles uninstallation of GooseUpdate in clients that have been injected into
 var uninstallButton = newButton("Uninstall")
+uninstallButton.enabled = false
+# Disable the button so that handleButtons can handle it
+uninstallButton.enabled = false
 uninstallButton.widthMode = WidthMode_Fill
 
 # handleButtons will update these variables and turn them into their names
@@ -107,40 +112,34 @@ var selectedInstanceSettingsPath: string
 
 proc handleButtons() =
     # Handle for if no Discord instances are found
-    if discordChannel.value == "":
-        installButton.enabled = false
-        uninstallButton.enabled = false
-    else:
-        installButton.enabled = true
-        uninstallButton.enabled = true
-    selectedInstancePath = getChannelPath(discordChannel.value)
-    selectedInstanceSettingsPath = os.joinPath(selectedInstancePath, "settings.json")
-    
-    # Parse Discord instance's settings.json
-    let parsedSettings = parseFile(selectedInstanceSettingsPath)
+    if discordChannel.value != "":
+        selectedInstancePath = getChannelPath(discordChannel.value)
+        selectedInstanceSettingsPath = os.joinPath(selectedInstancePath, "settings.json")
+        
+        # Parse Discord instance's settings.json
+        let parsedSettings = parseFile(selectedInstanceSettingsPath)
 
-    # This checks to see if a replacement update server is set 
-    if parsedSettings.hasKey("NEW_UPDATE_ENDPOINT") or parsedSettings.hasKey("NEW_UPDATE_ENDPOINT"):
-        if installButton in mainContainer.childControls:
-            mainContainer.remove(installButton)
-            mainContainer.add(uninstallButton)
-        extraMod.enabled = false
-        installGm.enabled = false
-    else:
-        if uninstallButton in mainContainer.childControls:
-            mainContainer.remove(uninstallButton)
-            mainContainer.add(installButton)
-        extraMod.enabled = true
-        installGm.enabled = true
+        # This checks to see if a replacement update server is set 
+        if parsedSettings.hasKey("NEW_UPDATE_ENDPOINT") or parsedSettings.hasKey("NEW_UPDATE_ENDPOINT"):
+            uninstallButton.enabled = true
+            installButton.enabled = false
+            extraMod.enabled = false
+            installGm.enabled = false
+        else:
+            uninstallButton.enabled = false
+            installButton.enabled = true
+            extraMod.enabled = true
+            installGm.enabled = true
 
-# This will get modified by handleButtons()
+# Add the installation buttons
 mainContainer.add(installButton)
+mainContainer.add(uninstallButton)
 
 # This gets called to make sure everything is initialized
 handleButtons()
 
-# I keep calling this function to replace all of the variables and update the UI components in certain situations
 discordChannel.onChange = proc(event: ComboBoxChangeEvent) =
+    # I keep calling this function to replace all of the variables and update the UI components in certain situations
     handleButtons()
 
 
